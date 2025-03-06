@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type RouteHandler } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export const PUT: RouteHandler = async (
+  request,
+  { params }
+) => {
   try {
     if (!uri) {
       throw new Error('MongoDB URI is not defined');
@@ -47,12 +47,12 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+};
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export const DELETE: RouteHandler = async (
+  request,
+  { params }
+) => {
   try {
     if (!uri) {
       throw new Error('MongoDB URI is not defined');
@@ -83,4 +83,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}; 
