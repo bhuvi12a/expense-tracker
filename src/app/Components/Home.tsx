@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { FiEdit2, FiTrash2, FiCalendar, FiClock, FiDollarSign, FiTrendingUp, FiPieChart } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 
 interface ExpenseData {
   _id?: string;
@@ -22,6 +23,7 @@ interface ExpenseStats {
 const MONTHLY_SALARY = 10000; // You can make this configurable later
 
 const Home: React.FC = () => {
+  const router = useRouter();
   const [expense, setExpense] = useState<ExpenseData>({
     description: '',
     amount: 0,
@@ -41,7 +43,7 @@ const Home: React.FC = () => {
   const [filterDate, setFilterDate] = useState<string>('');
   const [filteredExpenses, setFilteredExpenses] = useState<ExpenseData[]>([]);
   const [isEditingSalary, setIsEditingSalary] = useState(false);
-  const [newSalary, setNewSalary] = useState(MONTHLY_SALARY);
+  const [newSalary, setNewSalary] = useState(0);
 
   // Add this function to calculate stats
   const calculateStats = (expensesList: ExpenseData[]) => {
@@ -181,13 +183,56 @@ const Home: React.FC = () => {
     }
   };
 
-  // Add this function to handle salary updates
+  // Add this function to check authentication
+  const checkAuth = () => {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      router.push('/login');
+      return null;
+    }
+    return JSON.parse(user);
+  };
+
+  // Modify the fetchSalary function
+  const fetchSalary = async () => {
+    const user = checkAuth();
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/salary', {
+        headers: {
+          'user-id': user.id
+        }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setNewSalary(data.salary);
+        setStats(prev => ({
+          ...prev,
+          balance: data.salary - prev.monthly,
+          spendingPercentage: (prev.monthly / data.salary) * 100
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch salary:', error);
+      toast.error('Failed to fetch salary');
+    }
+  };
+
+  // Modify the handleSalaryUpdate function
   const handleSalaryUpdate = async () => {
-    if (newSalary > 0) {
+    const user = checkAuth();
+    if (!user) return;
+
+    if (newSalary >= 0) {
       try {
         const response = await fetch('/api/salary', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'user-id': user.id
+          },
           body: JSON.stringify({ salary: newSalary })
         });
 
@@ -210,29 +255,13 @@ const Home: React.FC = () => {
     }
   };
 
-  // Add this new function to fetch the salary
-  const fetchSalary = async () => {
-    try {
-      const response = await fetch('/api/salary');
-      const data = await response.json();
-      if (data.success) {
-        setNewSalary(data.salary);
-        // Update stats with the new salary
-        setStats(prev => ({
-          ...prev,
-          balance: data.salary - prev.monthly,
-          spendingPercentage: (prev.monthly / data.salary) * 100
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to fetch salary:', error);
-      toast.error('Failed to fetch salary');
-    }
-  };
-
-  // Add this useEffect to fetch the salary when the component mounts
+  // Add authentication check to useEffect
   useEffect(() => {
-    fetchSalary();
+    const user = checkAuth();
+    if (user) {
+      fetchSalary();
+      fetchExpenses();
+    }
   }, []);
 
   return (
@@ -270,7 +299,7 @@ const Home: React.FC = () => {
                     <button
                       onClick={() => {
                         setIsEditingSalary(false);
-                        setNewSalary(MONTHLY_SALARY);
+                        setNewSalary(0);
                       }}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                     >
