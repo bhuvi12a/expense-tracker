@@ -112,8 +112,15 @@ const Home: React.FC = () => {
   }, [expenses]);
 
   const fetchExpenses = async () => {
+    const user = checkAuth();
+    if (!user) return;
+
     try {
-      const response = await fetch('/api/expenses');
+      const response = await fetch('/api/expenses', {
+        headers: {
+          'user-id': user.id
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setExpenses(data.expenses);
@@ -134,10 +141,16 @@ const Home: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const user = checkAuth();
+    if (!user) return;
+
     if (window.confirm('Are you sure you want to delete this expense?')) {
       try {
         const response = await fetch(`/api/expenses/${id}`, {
           method: 'DELETE',
+          headers: {
+            'user-id': user.id
+          }
         });
 
         if (response.ok) {
@@ -154,6 +167,9 @@ const Home: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const user = checkAuth();
+    if (!user) return;
+
     setLoading(true);
     
     try {
@@ -165,7 +181,10 @@ const Home: React.FC = () => {
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'user-id': user.id
+        },
         body: JSON.stringify(expense),
       });
 
