@@ -1,10 +1,33 @@
 'use client'
 import Link from 'next/link';
-import { FaWallet } from 'react-icons/fa';
-import { useState } from 'react';
+import { FaWallet, FaUser } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface User {
+  username: string;
+  email: string;
+  id: string;
+}
 
 const Navbar = () => {
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check for user data in localStorage when component mounts
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    router.push('/login');
+  };
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 shadow-lg backdrop-blur-sm relative z-[100]">
@@ -18,7 +41,49 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Hamburger Menu Button */}
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <div className="relative group">
+                <div className="text-white hover:text-blue-200 transition-all cursor-pointer py-2 px-4 rounded-lg hover:bg-white/10 flex items-center gap-2">
+                  <FaUser />
+                  <span>{user.username}</span>
+                  <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl py-2 invisible group-hover:visible transition-all opacity-0 group-hover:opacity-100">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm text-gray-500">Signed in as</p>
+                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Link 
+                  href="/login" 
+                  className="text-white hover:text-blue-200 transition-all py-2 px-4 rounded-lg hover:bg-white/10"
+                >
+                  Login
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="bg-white text-blue-600 py-2 px-4 rounded-lg hover:bg-blue-50 transition-all"
+                >
+                  Register
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
           <button 
             className="md:hidden text-white p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -31,65 +96,44 @@ const Navbar = () => {
               )}
             </svg>
           </button>
+        </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center relative group">
-            <div className="text-white hover:text-blue-200 transition-all cursor-pointer py-2 px-4 rounded-lg hover:bg-white/10 flex items-center gap-2">
-              <span>Account</span>
-              <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            {/* Desktop Dropdown Menu */}
-            <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl py-2 invisible group-hover:visible transition-all opacity-0 group-hover:opacity-100 border border-gray-100 z-[101]">
-              <Link 
-                href="/login" 
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                Login
-              </Link>
-              <div className="border-b border-gray-100 my-1"></div>
-              <Link 
-                href="/register" 
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                Register
-              </Link>
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white shadow-lg md:hidden z-[101]">
+            <div className="p-4 space-y-3">
+              {user ? (
+                <>
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm text-gray-500">Signed in as</p>
+                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors rounded-lg"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    href="/login" 
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors rounded-lg"
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    href="/register" 
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors rounded-lg"
+                  >
+                    Register
+                  </Link>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 bg-white shadow-lg md:hidden z-[101]">
-              <div className="p-4 space-y-3">
-                <Link 
-                  href="/login" 
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors rounded-lg"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Login
-                </Link>
-                <Link 
-                  href="/register" 
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors rounded-lg"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                  Register
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </nav>
   );
