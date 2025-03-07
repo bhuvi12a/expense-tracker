@@ -37,7 +37,7 @@ const Navbar = () => {
           <Link href="/" className="text-white text-xl md:text-2xl font-bold flex items-center gap-2 hover:scale-105 transition-transform">
             <FaWallet className="text-yellow-300" />
             <span className="bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              ExpenseTracker
+              Expense Tracker
             </span>
           </Link>
 
