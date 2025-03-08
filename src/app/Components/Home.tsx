@@ -18,6 +18,7 @@ interface ExpenseStats {
   monthly: number;
   balance: number;
   spendingPercentage: number;
+  otherIncome: number;
 }
 
 const MONTHLY_SALARY = 10000; // You can make this configurable later
@@ -38,12 +39,14 @@ const Home: React.FC = () => {
     weekly: 0,
     monthly: 0,
     balance: MONTHLY_SALARY,
-    spendingPercentage: 0
+    spendingPercentage: 0,
+    otherIncome: 0
   });
   const [filterDate, setFilterDate] = useState<string>('');
   const [filteredExpenses, setFilteredExpenses] = useState<ExpenseData[]>([]);
   const [isEditingSalary, setIsEditingSalary] = useState(false);
   const [newSalary, setNewSalary] = useState(0);
+  const [otherIncome, setOtherIncome] = useState(0);
 
   // Add this function to calculate stats
   const calculateStats = (expensesList: ExpenseData[]) => {
@@ -69,7 +72,7 @@ const Home: React.FC = () => {
 
         return acc;
       },
-      { daily: 0, weekly: 0, monthly: 0, balance: newSalary, spendingPercentage: 0 }
+      { daily: 0, weekly: 0, monthly: 0, balance: newSalary, spendingPercentage: 0, otherIncome: 0 }
     );
 
     // Calculate balance and percentage using newSalary
@@ -252,25 +255,30 @@ const Home: React.FC = () => {
             'Content-Type': 'application/json',
             'user-id': user.id
           },
-          body: JSON.stringify({ salary: newSalary })
+          body: JSON.stringify({ 
+            salary: newSalary,
+            otherIncome: otherIncome 
+          })
         });
 
         if (response.ok) {
+          const totalIncome = newSalary + otherIncome;
           setStats(prev => ({
             ...prev,
-            balance: newSalary - prev.monthly,
-            spendingPercentage: (prev.monthly / newSalary) * 100
+            balance: totalIncome - prev.monthly,
+            spendingPercentage: (prev.monthly / totalIncome) * 100,
+            otherIncome: otherIncome
           }));
           setIsEditingSalary(false);
-          toast.success('Salary updated successfully!');
+          toast.success('Income updated successfully!');
         } else {
-          throw new Error('Failed to update salary');
+          throw new Error('Failed to update income');
         }
       } catch (error) {
-        toast.error('Failed to update salary');
+        toast.error('Failed to update income');
       }
     } else {
-      toast.error('Please enter a valid salary amount');
+      toast.error('Please enter valid amounts');
     }
   };
 
@@ -294,19 +302,36 @@ const Home: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gray-50 rounded-xl p-6 text-center transform hover:scale-[1.02] transition-all duration-300">
-              <p className="text-gray-600 text-lg mb-2">Monthly Salary</p>
+              <p className="text-gray-600 text-lg mb-2">Monthly Income</p>
               {isEditingSalary ? (
-                <div className="space-y-2">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
-                    <input
-                      type="number"
-                      value={newSalary}
-                      onChange={(e) => setNewSalary(Number(e.target.value))}
-                      className="w-full pl-8 p-2 text-2xl font-bold text-gray-800 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                      min="0"
-                      step="100"
-                    />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-600">Salary</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                      <input
+                        type="number"
+                        value={newSalary}
+                        onChange={(e) => setNewSalary(Number(e.target.value))}
+                        className="w-full pl-8 p-2 text-xl font-bold text-gray-800 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        step="100"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-600">Other Income</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                      <input
+                        type="number"
+                        value={otherIncome}
+                        onChange={(e) => setOtherIncome(Number(e.target.value))}
+                        className="w-full pl-8 p-2 text-xl font-bold text-gray-800 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                        step="100"
+                      />
+                    </div>
                   </div>
                   <div className="flex gap-2 justify-center">
                     <button
@@ -318,7 +343,8 @@ const Home: React.FC = () => {
                     <button
                       onClick={() => {
                         setIsEditingSalary(false);
-                        setNewSalary(0);
+                        setNewSalary(stats.balance);
+                        setOtherIncome(stats.otherIncome);
                       }}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                     >
@@ -328,7 +354,20 @@ const Home: React.FC = () => {
                 </div>
               ) : (
                 <div className="relative group">
-                  <p className="text-4xl font-bold text-gray-800">₹{newSalary.toFixed(2)}</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm text-gray-600">Salary</p>
+                      <p className="text-2xl font-bold text-gray-800">₹{newSalary.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Other Income</p>
+                      <p className="text-2xl font-bold text-gray-800">₹{otherIncome.toFixed(2)}</p>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p className="text-sm text-gray-600">Total Income</p>
+                      <p className="text-3xl font-bold text-gray-800">₹{(newSalary + otherIncome).toFixed(2)}</p>
+                    </div>
+                  </div>
                   <button
                     onClick={() => setIsEditingSalary(true)}
                     className="absolute -top-2 -right-2 p-2 bg-blue-100 text-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

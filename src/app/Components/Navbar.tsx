@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { FaWallet, FaUser } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ProfileSettings from './ProfileSettings';
 
 interface User {
   username: string;
@@ -14,6 +15,7 @@ const Navbar = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
 
   useEffect(() => {
     // Check for user data in localStorage when component mounts
@@ -27,6 +29,10 @@ const Navbar = () => {
     localStorage.removeItem('user');
     setUser(null);
     router.push('/login');
+  };
+
+  const handleProfileUpdate = (updatedUser: User) => {
+    setUser(updatedUser);
   };
 
   return (
@@ -63,6 +69,12 @@ const Navbar = () => {
                   >
                     Sign out
                   </button>
+                  <Link 
+                    href="/profile"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    Profile Settings
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -133,6 +145,14 @@ const Navbar = () => {
               )}
             </div>
           </div>
+        )}
+
+        {showProfileSettings && user && (
+          <ProfileSettings
+            onClose={() => setShowProfileSettings(false)}
+            onUpdate={handleProfileUpdate}
+            currentUser={user}
+          />
         )}
       </div>
     </nav>
